@@ -6,6 +6,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
@@ -27,10 +28,37 @@ import com.jigneshgaming.micai.R
  * The service only listens while the user has enabled the wake word in
  * Settings and granted RECORD_AUDIO.
  */
-class WakeWordService : Service(), SpeechRecognizer.OnResultsListener {
+class WakeWordService : Service() {
 
     private var recognizer: SpeechRecognizer? = null
     private var running = false
+
+    private val recognitionListener = object : RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) = Unit
+        override fun onBeginningOfSpeech() = Unit
+        override fun onRmsChanged(rmsdB: Float) = Unit
+        override fun onBufferReceived(buffer: ByteArray?) = Unit
+        override fun onEndOfSpeech() = Unit
+        override fun onPartialResults(partialResults: Bundle?) = Unit
+        override fun onEvent(eventType: Int, params: Bundle?) = Unit
+
+        override fun onResults(results: Bundle?) {
+            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+            val heard = matches?.firstOrNull()?.lowercase().orEmpty()
+            Log.d(TAG, "heard: $heard")
+            if (WAKE_PHRASES.any { heard.contains(it) }) {
+                val broadcast = Intent(ACTION_WAKE_WORD).setPackage(packageName)
+                sendBroadcast(broadcast)
+            }
+            if (running) listenOnce()
+        }
+
+        override fun onError(error: Int) {
+            // SpeechRecognizer errors (no speech, network, busy…) are routine
+            // in a listen loop — just listen again after a short pause.
+            if (running) scheduleRetry()
+        }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -57,7 +85,7 @@ class WakeWordService : Service(), SpeechRecognizer.OnResultsListener {
         }
         running = true
         recognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
-            setOnResultsListener(this@WakeWordService)
+            setRecognitionListener(recognitionListener)
         }
         listenOnce()
     }
@@ -78,22 +106,6 @@ class WakeWordService : Service(), SpeechRecognizer.OnResultsListener {
             Log.w(TAG, "Wake-word listen failed: ${e.message}")
             scheduleRetry()
         }
-    }
-
-    override fun onResults(results: Bundle?) {
-        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-        val heard = matches?.firstOrNull()?.lowercase().orEmpty()
-        if (WAKE_PHRASES.any { heard.contains(it) }) {
-            val broadcast = Intent(ACTION_WAKE_WORD).setPackage(packageName)
-            sendBroadcast(broadcast)
-        }
-        if (running) listenOnce()
-    }
-
-    override fun onError(error: Int) {
-        // SpeechRecognizer errors (no speech, network, busy…) are routine in
-        // a loop — just listen again after a short pause.
-        if (running) scheduleRetry()
     }
 
     private fun scheduleRetry() {

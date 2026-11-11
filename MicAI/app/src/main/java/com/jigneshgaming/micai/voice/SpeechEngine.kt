@@ -28,6 +28,7 @@ class SpeechEngine(
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private var speaking = false
+    private var pendingText: String? = null
 
     var onSpeakingChanged: ((Boolean) -> Unit)? = null
 
@@ -49,19 +50,29 @@ class SpeechEngine(
             override fun onError(id: String?, errorCode: Int) = setSpeaking(false)
         })
         ttsReady = true
+        // A reply can arrive before the engine finishes initialising (the
+        // first answer after launch). Speak it now instead of dropping it.
+        pendingText?.let { queued ->
+            pendingText = null
+            speak(queued)
+        }
     }
 
     /** Speak [text], interrupting anything currently playing. */
     fun speak(text: String) {
         val engine = tts ?: return
         if (!settings.voiceEnabled || text.isBlank()) return
-        if (!ttsReady) return
+        if (!ttsReady) {
+            pendingText = text
+            return
+        }
         engine.stop()
         engine.language = localeFor(text)
         engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "mic_ai_reply")
     }
 
     fun stopSpeaking() {
+        pendingText = null
         tts?.stop()
         setSpeaking(false)
     }
@@ -83,6 +94,7 @@ class SpeechEngine(
     }
 
     fun shutdown() {
+        pendingText = null
         tts?.stop()
         tts?.shutdown()
         tts = null

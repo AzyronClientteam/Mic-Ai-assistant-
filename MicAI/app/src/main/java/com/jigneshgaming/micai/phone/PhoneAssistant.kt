@@ -88,7 +88,7 @@ class PhoneAssistant(private val context: Context) {
         }
         val pm = appContext.packageManager
         return pm.queryIntentActivities(intent, PackageManager.MATCH_ALL)
-            .map { it.activityInfo.packageName to pm.getApplicationLabel(it.applicationInfo).toString() }
+            .map { it.activityInfo.packageName to it.loadLabel(pm).toString() }
             .sortedBy { it.second.lowercase() }
     }
 

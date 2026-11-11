@@ -69,15 +69,3 @@ fun HistoryScreen(
         }
     }
 }
-
-private fun Row(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.foundation.layout.Row(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        content = { content() }
-    )
-}

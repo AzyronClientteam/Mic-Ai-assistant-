@@ -80,9 +80,7 @@ class LocalBrain {
         if (input.startsWith("note") || input.startsWith("take a note") ||
             input.startsWith("remember this") || input.startsWith("save a note")
         ) {
-            val text = rawInput.substringAfter("note", "")
-                .substringAfter("remember this", "")
-                .trim().trimStart(':', '-').trim()
+            val text = afterKeyword(rawInput, "note", "remember this", "save a note", "take a note")
             if (text.isBlank()) return Reply("What should I write in the note, sir?")
             return Reply("Note saved: $text", Action.AddNote(text))
         }
@@ -169,6 +167,27 @@ class LocalBrain {
     }
 
     // ------------------------------------------------------------- helpers
+
+    /**
+     * Returns everything after the first of [keywords] found in [raw],
+     * stripped of separators. Unlike chained `substringAfter` calls this
+     * works no matter which keyword the user chose.
+     */
+    private fun afterKeyword(raw: String, vararg keywords: String): String {
+        val lower = raw.lowercase(Locale.ROOT)
+        var index = -1
+        var length = 0
+        for (keyword in keywords) {
+            val found = lower.indexOf(keyword)
+            if (found >= 0) {
+                index = found
+                length = keyword.length
+                break
+            }
+        }
+        if (index < 0) return ""
+        return raw.substring(index + length).trim().trimStart(':', '-').trim()
+    }
 
     private fun parseInMinutes(input: String): Long {
         Regex("(\\d+)\\s*(hour|hours|hr|hrs)").find(input)?.let {
