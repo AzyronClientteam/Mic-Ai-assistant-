@@ -2,30 +2,38 @@ package com.jigneshgaming.micai.data.prefs
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
+import androidx.security.crypto.MasterKeys
 
 /**
  * User preferences. The AI API key is stored in [EncryptedSharedPreferences]
  * (AES-256 at rest) and is never compiled into the APK. Everything else is
  * plain preferences so it survives backup/restore predictably.
+ *
+ * If the Android keystore refuses to create the master key (it happens on a
+ * small number of devices / after a botched OS upgrade) we fall back to a
+ * private, unencrypted file rather than crashing on the settings screen.
  */
 class SettingsStore(context: Context) {
 
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
-    private val securePrefs: SharedPreferences by lazy {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            SECURE_PREFS,
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+    private val securePrefs: SharedPreferences = run {
+        try {
+            val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+            EncryptedSharedPreferences.create(
+                SECURE_PREFS,
+                masterKeyAlias,
+                context,
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        } catch (t: Throwable) {
+            Log.w(TAG, "Encrypted prefs unavailable, using private fallback", t)
+            context.getSharedPreferences(SECURE_PREFS_FALLBACK, Context.MODE_PRIVATE)
+        }
     }
 
     // ------------------------------------------------------------ AI backend
@@ -80,8 +88,10 @@ class SettingsStore(context: Context) {
     val hasAiCredentials: Boolean get() = aiApiKey.isNotBlank()
 
     companion object {
+        private const val TAG = "SettingsStore"
         private const val PREFS = "mic_ai_prefs"
         private const val SECURE_PREFS = "mic_ai_secure_prefs"
+        private const val SECURE_PREFS_FALLBACK = "mic_ai_secure_prefs_fallback"
         private const val KEY_BASE_URL = "ai_base_url"
         private const val KEY_MODEL = "ai_model"
         private const val KEY_API_KEY = "ai_api_key"
