@@ -1,0 +1,44 @@
+name: MIC AI Android
+
+on:
+  push:
+    paths:
+      - "MicAI/**"
+      - ".github/workflows/mic-ai-android.yml"
+  pull_request:
+    paths:
+      - "MicAI/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+
+      - name: Build debug APK
+        working-directory: MicAI
+        run: ./gradlew :app:assembleDebug --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mic-ai-debug-apk
+          path: MicAI/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error

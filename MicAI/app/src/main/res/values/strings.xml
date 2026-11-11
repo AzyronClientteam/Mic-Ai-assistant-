@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">MIC AI</string>
+    <string name="developer_name">JIGNESH GAMING</string>
+    <string name="wake_word">Hey MIC</string>
+    <string name="notification_channel_assistant">MIC AI Assistant</string>
+    <string name="notification_channel_reminders">Reminders</string>
+    <string name="notification_channel_calls">Call announcements</string>
+</resources>

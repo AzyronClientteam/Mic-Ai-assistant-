@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Glowing orb ring -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,14a40,40 0,1,0 0.1,0zM54,20a34,34 0,1,1 -0.1,0z" />
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M54,30a24,24 0,1,0 0.1,0zM54,36a18,18 0,1,1 -0.1,0z" />
+    <!-- Mic capsule -->
+    <path
+        android:fillColor="#E0F7FF"
+        android:pathData="M54,42c-4.4,0 -8,3.6 -8,8v10c0,4.4 3.6,8 8,8s8,-3.6 8,-8V50c0,-4.4 -3.6,-8 -8,-8z" />
+    <path
+        android:fillColor="#E0F7FF"
+        android:pathData="M38,58c0,8.8 7.2,16 16,16s16,-7.2 16,-16h-4c0,6.6 -5.4,12 -12,12s-12,-5.4 -12,-12h-4z" />
+    <path
+        android:fillColor="#E0F7FF"
+        android:pathData="M52,74h4v10h-4z" />
+    <path
+        android:fillColor="#E0F7FF"
+        android:pathData="M44,84h20v4H44z" />
+</vector>
