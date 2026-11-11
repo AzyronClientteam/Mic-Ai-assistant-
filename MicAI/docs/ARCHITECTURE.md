@@ -31,7 +31,7 @@ Reply → chat UI + history DB + TextToSpeech
 | `phone/CallAnnouncer` | `PhoneStateListener` → contact lookup → TTS announcement |
 | `phone/MicNotificationListener` | In-memory recent-notification store |
 | `data/MicDatabase` | SQLite: notes, reminders, history (offline-first) |
-| `data/SettingsStore` | Preferences + `EncryptedSharedPreferences` for the API key |
+| `data/SettingsStore` | Preferences; API key in `EncryptedSharedPreferences` (plain private prefs if the keystore refuses the master key) |
 
 ## Known limitations (by design, not bugs)
 
@@ -59,10 +59,24 @@ Reply → chat UI + history DB + TextToSpeech
 
 ## Testing
 
-- `LocalBrain` is pure Kotlin with no Android dependencies — it can be
-  unit-tested on the JVM directly.
-- The debug APK is built by GitHub Actions (`.github/workflows/mic-ai-android.yml`)
-  on every push touching `MicAI/`.
-- Manual test checklist: voice command, wake word, note, reminder (short
-  delay), alarm, open app, contact search, battery, weather (online),
-  AI chat (online), image question (online), caller announcement.
+What is verified automatically, on every push touching `MicAI/`:
+
+- **Compilation** — `:app:assembleDebug` on JDK 17 with AGP 8.2.2 / Kotlin
+  2.0.21 in `.github/workflows/mic-ai-android.yml`. Compiler errors are
+  surfaced as workflow annotations.
+- **Packaging** — `aapt2 dump badging` on the produced APK is published in
+  the `mic-ai-latest` release notes, so the package name, `minSdkVersion`,
+  declared permissions and launcher activity are checkable without
+  installing anything.
+
+What is **not** verified automatically:
+
+- Runtime behaviour. No emulator or device run is part of the pipeline, so
+  voice capture, TTS output, the wake word, caller announcements and
+  reminder delivery have not been executed by CI.
+- `LocalBrain` is pure Kotlin with no Android dependencies and is written
+  to be unit-testable on the JVM, but no unit tests are wired up yet.
+
+Manual test checklist: voice command, wake word, note, reminder (short
+delay), alarm, open app, contact search, battery, weather (online),
+AI chat (online), image question (online), caller announcement.
