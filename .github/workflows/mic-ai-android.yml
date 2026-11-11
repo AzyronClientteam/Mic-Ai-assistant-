@@ -81,6 +81,17 @@ jobs:
           cp MicAI/app/build/outputs/apk/debug/app-debug.apk out/MIC-AI-debug.apk
           ls -la out/
 
+      # Print what is actually inside the APK so the build proves the package
+      # name, minSdk, permissions and launcher activity are what we claim.
+      - name: Inspect APK
+        run: |
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | head -1)
+          echo "using $AAPT2"
+          "$AAPT2" dump badging out/MIC-AI-debug.apk \
+            | grep -E "^package|^sdkVersion|^targetSdkVersion|^application-label:|^launchable-activity|^uses-permission" \
+            | tee out/apk-badging.txt
+          du -h out/MIC-AI-debug.apk
+
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -98,16 +109,25 @@ jobs:
         run: |
           TAG="mic-ai-latest"
           SHA="${GITHUB_SHA:0:7}"
-          NOTES="Installable debug APK built from $SHA.
-
-          **Install:** download MIC-AI-debug.apk on your phone, allow installs
-          from unknown sources when prompted, then open the file.
-
-          Requires Android 9 (API 28) or newer. The online AI brain needs an
-          API key in Settings; every offline feature works without one."
+          {
+            echo "Installable debug APK built from $SHA."
+            echo
+            echo "**Install:** download MIC-AI-debug.apk on your phone, allow installs"
+            echo "from unknown sources when prompted, then open the file."
+            echo
+            echo "Requires Android 9 (API 28) or newer. The online AI brain needs an"
+            echo "API key in Settings; every offline feature works without one."
+            echo
+            echo "### Verified APK contents (aapt2 badging)"
+            echo
+            echo '```'
+            cat out/apk-badging.txt
+            echo '```'
+          } > out/notes.md
           gh release create "$TAG" \
             --target "$GITHUB_REF_NAME" \
             --title "MIC AI (debug build)" \
-            --notes "$NOTES" \
+            --notes-file out/notes.md \
             out/MIC-AI-debug.apk || true
           gh release upload "$TAG" out/MIC-AI-debug.apk --clobber
+          gh release edit "$TAG" --notes-file out/notes.md
