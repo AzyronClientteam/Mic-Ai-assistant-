@@ -43,15 +43,27 @@ behind a futuristic glowing-orb interface.
 
 ## Build & install
 
-### Option A — GitHub Actions (recommended, no local setup)
+### Option A — download the built APK (no setup at all)
+
+Every push under `MicAI/` is built by GitHub Actions and the debug APK is
+published to the **[`mic-ai-latest` release](../releases/tag/mic-ai-latest)**:
+
+1. Open that release on your phone and download `MIC-AI-debug.apk`.
+2. Allow "install from unknown sources" when Android asks, then open the file.
+
+The same APK is also attached to the workflow run as the
+`mic-ai-debug-apk` artifact (Actions → MIC AI Android → latest run).
+
+### Option B — GitHub Actions on your own fork
 
 1. Push this repo to GitHub.
 2. Open **Actions → MIC AI Android → Run workflow** (or push any change
-   under `MicAI/`).
-3. Download the `mic-ai-debug-apk` artifact.
-4. Install the APK on your phone (allow "install from unknown sources").
+   under `MicAI/`). Note: GitHub disables Actions on forks until you turn
+   them on in **Settings → Actions → General**.
+3. Download `MIC-AI-debug.apk` from the run artifacts, or from the
+   `mic-ai-latest` release the workflow publishes.
 
-### Option B — Local build
+### Option C — Local build
 
 Requirements: JDK 17, Android SDK (platform 34, build-tools 34).
 
@@ -69,7 +81,10 @@ cd MicAI
    so no key ever touches the APK.
 3. (Optional) Enable **"Hey MIC"** in Settings, then grant notification
    access in **Permissions** to let MIC read notifications.
-4. Say **"Hey MIC"** or tap the mic and try: *"Open YouTube"*, *"Note buy
+4. (Optional) Grant **Alarms & reminders** in Permissions for reminders to
+   fire at the exact minute. Without it, Android 12+ still fires them, a
+   few minutes late.
+5. Say **"Hey MIC"** or tap the mic and try: *"Open YouTube"*, *"Note buy
    milk"*, *"Remind me in 10 minutes to call mom"*, *"What is the weather
    in Rajkot?"*.
 
